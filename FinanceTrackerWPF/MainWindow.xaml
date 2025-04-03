@@ -9,10 +9,12 @@
 
             <!-- Planned Fields -->
             <TextBlock Text="Planned Income:"/>
-            <TextBox x:Name="PlannedIncomeTextBox" Margin="0,0,0,10"/>
+            <TextBox x:Name="PlannedIncomeTextBox" Margin="0,0,0,10"
+                     TextChanged="PlannedIncomeTextBox_TextChanged"/>
 
             <TextBlock Text="Expected Expenses:"/>
-            <TextBox x:Name="ExpectedExpensesTextBox" Margin="0,0,0,20"/>
+            <TextBox x:Name="ExpectedExpensesTextBox" Margin="0,0,0,20"
+                     TextChanged="ExpectedExpensesTextBox_TextChanged"/>
 
             <!-- Transaction Inputs -->
             <TextBlock Text="Amount:"/>

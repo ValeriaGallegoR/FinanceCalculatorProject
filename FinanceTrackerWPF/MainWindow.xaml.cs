@@ -30,6 +30,8 @@ namespace FinanceCalculatorWPF
             DataContext = this;
 
             MessageBox.Show("✅ Database initialized successfully.");
+            ShowAll_Click(null, null);
+            UpdateGraph();
         }
 
         private void AddTransaction_Click(object sender, RoutedEventArgs e)
@@ -276,8 +278,9 @@ namespace FinanceCalculatorWPF
         private void ClearInputs()
         {
             AmountTextBox.Clear();
-            PlannedIncomeTextBox.Clear();
-            ExpectedExpensesTextBox.Clear();
+            // Keep planned inputs visible
+            // PlannedIncomeTextBox.Clear();
+            // ExpectedExpensesTextBox.Clear();
             IncomeCategoryComboBox.SelectedIndex = -1;
             ExpenseCategoryComboBox.SelectedIndex = -1;
             TypeComboBox.SelectedIndex = -1;
@@ -300,6 +303,17 @@ namespace FinanceCalculatorWPF
                     ExpenseCategoryComboBox.Visibility = Visibility.Visible;
                 }
             }
+        }
+
+        // 🔄 Trigger graph update when planned values change
+        private void PlannedIncomeTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            UpdateGraph();
+        }
+
+        private void ExpectedExpensesTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            UpdateGraph();
         }
     }
 }
