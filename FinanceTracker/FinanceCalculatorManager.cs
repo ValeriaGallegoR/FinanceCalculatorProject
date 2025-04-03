@@ -7,16 +7,13 @@ namespace FinanceCalculator
 {
     public class FinanceCalculatorManager
     {
-        // List to store transactions
         private List<Transaction> transactions;
 
-        // Constructor
         public FinanceCalculatorManager()
         {
             transactions = new List<Transaction>();
         }
 
-        // Method to add a transaction - Income
         public void AddTransactionIncome(IncomeTransaction transaction)
         {
             using (SQLiteConnection connection = Connection.GetConnection())
@@ -37,7 +34,6 @@ namespace FinanceCalculator
             Console.WriteLine("Income transaction added successfully.");
         }
 
-        // Method to add a transaction - Expense
         public void AddTransactionExpense(ExpenseTransaction transaction)
         {
             using (SQLiteConnection connection = Connection.GetConnection())
@@ -58,14 +54,13 @@ namespace FinanceCalculator
             Console.WriteLine("Expense transaction added successfully.");
         }
 
-        // Method to display all transactions
         public List<string> DisplayAllTransactions()
         {
             List<string> transactionsList = new List<string>();
 
             using (SQLiteConnection connection = Connection.GetConnection())
             {
-                string query = "SELECT Date, Amount, Type, Category FROM Transactions ORDER BY Date DESC";
+                string query = "SELECT Id, Date, Amount, Type, Category FROM Transactions ORDER BY Date DESC";
                 SQLiteCommand command = new SQLiteCommand(query, connection);
                 try
                 {
@@ -74,7 +69,7 @@ namespace FinanceCalculator
 
                     while (reader.Read())
                     {
-                        string transaction = $"{reader["Date"]}\t{reader["Amount"]}\t{reader["Type"]}\t{reader["Category"]}";
+                        string transaction = $"{reader["Id"]}|{reader["Date"]}\t{reader["Amount"]}\t{reader["Type"]}\t{reader["Category"]}";
                         transactionsList.Add(transaction);
                     }
                     reader.Close();
@@ -89,14 +84,13 @@ namespace FinanceCalculator
             return transactionsList;
         }
 
-        // Method to display transactions filtered by type
         public List<string> DisplayTransactionsByType(TransactionType type)
         {
             List<string> transactionsList = new List<string>();
 
             using (SQLiteConnection connection = Connection.GetConnection())
             {
-                string query = "SELECT Date, Amount, Type, Category FROM Transactions WHERE Type = @type ORDER BY Date DESC";
+                string query = "SELECT Id, Date, Amount, Type, Category FROM Transactions WHERE Type = @type ORDER BY Date DESC";
                 SQLiteCommand command = new SQLiteCommand(query, connection);
                 command.Parameters.AddWithValue("@type", type.ToString());
 
@@ -107,7 +101,7 @@ namespace FinanceCalculator
 
                     while (reader.Read())
                     {
-                        string transaction = $"{reader["Date"]}\t{reader["Amount"]}\t{reader["Type"]}\t{reader["Category"]}";
+                        string transaction = $"{reader["Id"]}|{reader["Date"]}\t{reader["Amount"]}\t{reader["Type"]}\t{reader["Category"]}";
                         transactionsList.Add(transaction);
                     }
                     reader.Close();

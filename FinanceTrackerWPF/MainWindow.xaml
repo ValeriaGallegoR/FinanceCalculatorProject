@@ -47,6 +47,8 @@
 
             <!-- Buttons -->
             <Button Content="Add Transaction" Click="AddTransaction_Click" Margin="0,0,0,10"/>
+            <Button Content="Update Selected Transaction" Click="UpdateTransaction_Click" Margin="0,0,0,10"/>
+            <Button Content="Delete Selected Transaction" Click="DeleteTransaction_Click" Margin="0,0,0,10"/>
             <Button Content="Show All Transactions" Click="ShowAll_Click" Margin="0,0,0,10"/>
             <Button Content="Show Transactions by Type" Click="ShowByType_Click" Margin="0,0,0,10"/>
 

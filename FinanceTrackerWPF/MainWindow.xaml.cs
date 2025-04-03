@@ -1,10 +1,12 @@
-﻿using System.Windows;
+﻿using System;
+using System.Windows;
 using System.Windows.Controls;
 using FinanceCalculator;
 using LiveCharts;
 using LiveCharts.Wpf;
 using System.Windows.Media;
 using FinanceCalculatorProject;
+using System.Data.SQLite;
 
 namespace FinanceCalculatorWPF
 {
@@ -15,14 +17,11 @@ namespace FinanceCalculatorWPF
         public Func<double, string> Formatter { get; set; }
 
         public MainWindow()
-  
         {
             InitializeComponent();
 
-            // Force SQLite to create DB and table
             var conn = Connection.GetConnection();
-            conn.Open(); // Ensures the file is physically created
-            conn.Close();
+            conn.Open(); conn.Close();
 
             cm = new FinanceCalculatorManager();
             co = new FinanceCalculatorOperations();
@@ -30,41 +29,56 @@ namespace FinanceCalculatorWPF
             Formatter = value => value.ToString("C");
             DataContext = this;
 
-            MessageBox.Show("DB connection initialized!");
+            MessageBox.Show("✅ Database initialized successfully.");
         }
 
         private void AddTransaction_Click(object sender, RoutedEventArgs e)
         {
-            if (decimal.TryParse(AmountTextBox.Text, out decimal amount) &&
-                //!string.IsNullOrWhiteSpace(TypeComboBox_SelectionChanged.Text) &&
-                TypeComboBox.SelectedItem is ComboBoxItem selectedType)
+            if (!decimal.TryParse(AmountTextBox.Text.Trim(), out decimal amount) || amount <= 0)
             {
-                string typeText = selectedType.Content.ToString();
-
-                if (typeText == "Income")
-                {
-                    var income = new IncomeTransaction(DateTime.Now, amount, IncomeCategoryComboBox.Text);
-                    cm.AddTransactionIncome(income);
-                    MessageBox.Show("Income added!");
-                }
-                else if (typeText == "Expense")
-                {
-                    var expense = new ExpenseTransaction(DateTime.Now, amount, ExpenseCategoryComboBox.Text);
-                    cm.AddTransactionExpense(expense);
-                    MessageBox.Show("Expense added!");
-                }
-
-                // Clear inputs
-                AmountTextBox.Clear();
-                //SourceCategoryComboBox.Clear();
-                TypeComboBox.SelectedIndex = -1;
-
-                UpdateGraph(); // Automatically refresh chart
+                MessageBox.Show("❌ Please enter a valid positive amount.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
             }
-            else
+
+            if (!(TypeComboBox.SelectedItem is ComboBoxItem selectedType))
             {
-                MessageBox.Show("Please enter valid data.");
+                MessageBox.Show("❌ Please select a transaction type.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
             }
+
+            string typeText = selectedType.Content.ToString();
+            string category = "";
+
+            if (typeText == "Income")
+            {
+                if (string.IsNullOrWhiteSpace(IncomeCategoryComboBox.Text))
+                {
+                    MessageBox.Show("❌ Please select a source for the income.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                category = IncomeCategoryComboBox.Text;
+                var income = new IncomeTransaction(DateTime.Now, amount, category);
+                cm.AddTransactionIncome(income);
+                MessageBox.Show("✅ Income added successfully.");
+            }
+            else if (typeText == "Expense")
+            {
+                if (string.IsNullOrWhiteSpace(ExpenseCategoryComboBox.Text))
+                {
+                    MessageBox.Show("❌ Please select a category for the expense.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                category = ExpenseCategoryComboBox.Text;
+                var expense = new ExpenseTransaction(DateTime.Now, amount, category);
+                cm.AddTransactionExpense(expense);
+                MessageBox.Show("✅ Expense added successfully.");
+            }
+
+            ClearInputs();
+            ShowAll_Click(null, null);
+            UpdateGraph();
         }
 
         private void ShowAll_Click(object sender, RoutedEventArgs e)
@@ -98,11 +112,111 @@ namespace FinanceCalculatorWPF
                     }
                 }
 
-                UpdateGraph(); // Optional: update graph after filtering
+                UpdateGraph();
             }
             else
             {
                 MessageBox.Show("Please select a transaction type to filter.");
+            }
+        }
+
+        private void UpdateTransaction_Click(object sender, RoutedEventArgs e)
+        {
+            if (TransactionList.SelectedItem == null)
+            {
+                MessageBox.Show("❌ Please select a transaction from the list to update.");
+                return;
+            }
+
+            if (!decimal.TryParse(AmountTextBox.Text.Trim(), out decimal amount) || amount <= 0)
+            {
+                MessageBox.Show("❌ Please enter a valid positive amount.");
+                return;
+            }
+
+            if (!(TypeComboBox.SelectedItem is ComboBoxItem selectedType))
+            {
+                MessageBox.Show("❌ Please select a transaction type.");
+                return;
+            }
+
+            string selectedText = TransactionList.SelectedItem.ToString();
+            string idPart = selectedText.Split('|')[0];
+            if (!int.TryParse(idPart, out int transactionId))
+            {
+                MessageBox.Show("❌ Could not extract transaction ID.");
+                return;
+            }
+
+            string typeText = selectedType.Content.ToString();
+            string category = (typeText == "Income") ? IncomeCategoryComboBox.Text : ExpenseCategoryComboBox.Text;
+
+            if (string.IsNullOrWhiteSpace(category))
+            {
+                MessageBox.Show("❌ Category or source is required.");
+                return;
+            }
+
+            using (var conn = Connection.GetConnection())
+            {
+                conn.Open();
+                string query = "UPDATE Transactions SET Amount = @amount, Type = @type, Category = @category, Date = @date WHERE Id = @id";
+
+                using (var cmd = new SQLiteCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@amount", amount);
+                    cmd.Parameters.AddWithValue("@type", typeText);
+                    cmd.Parameters.AddWithValue("@category", category);
+                    cmd.Parameters.AddWithValue("@date", DateTime.Now.ToString("yyyy-MM-dd"));
+                    cmd.Parameters.AddWithValue("@id", transactionId);
+                    cmd.ExecuteNonQuery();
+                }
+                conn.Close();
+            }
+
+            MessageBox.Show("✅ Transaction updated successfully.");
+            ClearInputs();
+            ShowAll_Click(null, null);
+            UpdateGraph();
+        }
+
+        private void DeleteTransaction_Click(object sender, RoutedEventArgs e)
+        {
+            if (TransactionList.SelectedItem == null)
+            {
+                MessageBox.Show("❌ Please select a transaction to delete.");
+                return;
+            }
+
+            string selectedText = TransactionList.SelectedItem.ToString();
+            string idPart = selectedText.Split('|')[0];
+
+            if (!int.TryParse(idPart, out int transactionId))
+            {
+                MessageBox.Show("❌ Could not extract transaction ID.");
+                return;
+            }
+
+            var result = MessageBox.Show("Are you sure you want to delete this transaction?", "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (result == MessageBoxResult.Yes)
+            {
+                using (var conn = Connection.GetConnection())
+                {
+                    conn.Open();
+                    string query = "DELETE FROM Transactions WHERE Id = @id";
+
+                    using (var cmd = new SQLiteCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@id", transactionId);
+                        cmd.ExecuteNonQuery();
+                    }
+                    conn.Close();
+                }
+
+                MessageBox.Show("✅ Transaction deleted successfully.");
+                ClearInputs();
+                ShowAll_Click(null, null);
+                UpdateGraph();
             }
         }
 
@@ -111,8 +225,17 @@ namespace FinanceCalculatorWPF
             decimal actualIncome = co.CalculateTotalIncome();
             decimal actualExpenses = co.CalculateTotalExpenses();
 
-            decimal plannedIncome = decimal.TryParse(PlannedIncomeTextBox.Text, out var pi) ? pi : 0;
-            decimal expectedExpenses = decimal.TryParse(ExpectedExpensesTextBox.Text, out var ee) ? ee : 0;
+            if (!decimal.TryParse(PlannedIncomeTextBox.Text.Trim(), out decimal plannedIncome))
+                plannedIncome = 0;
+
+            if (!decimal.TryParse(ExpectedExpensesTextBox.Text.Trim(), out decimal expectedExpenses))
+                expectedExpenses = 0;
+
+            if (plannedIncome < 0 || expectedExpenses < 0)
+            {
+                MessageBox.Show("❌ Planned values must be positive.");
+                return;
+            }
 
             if (expectedExpenses > 0 && actualExpenses > expectedExpenses)
             {
@@ -149,6 +272,17 @@ namespace FinanceCalculatorWPF
                 LabelFormatter = Formatter
             });
         }
+
+        private void ClearInputs()
+        {
+            AmountTextBox.Clear();
+            PlannedIncomeTextBox.Clear();
+            ExpectedExpensesTextBox.Clear();
+            IncomeCategoryComboBox.SelectedIndex = -1;
+            ExpenseCategoryComboBox.SelectedIndex = -1;
+            TypeComboBox.SelectedIndex = -1;
+        }
+
         private void TypeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (TypeComboBox.SelectedItem is ComboBoxItem selectedType)
