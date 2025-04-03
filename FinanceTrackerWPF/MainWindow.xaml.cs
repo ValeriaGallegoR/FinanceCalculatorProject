@@ -4,6 +4,7 @@ using FinanceCalculator;
 using LiveCharts;
 using LiveCharts.Wpf;
 using System.Windows.Media;
+using FinanceCalculatorProject;
 
 namespace FinanceCalculatorWPF
 {
@@ -14,13 +15,22 @@ namespace FinanceCalculatorWPF
         public Func<double, string> Formatter { get; set; }
 
         public MainWindow()
+  
         {
             InitializeComponent();
+
+            // Force SQLite to create DB and table
+            var conn = Connection.GetConnection();
+            conn.Open(); // Ensures the file is physically created
+            conn.Close();
+
             cm = new FinanceCalculatorManager();
             co = new FinanceCalculatorOperations();
 
             Formatter = value => value.ToString("C");
             DataContext = this;
+
+            MessageBox.Show("DB connection initialized!");
         }
 
         private void AddTransaction_Click(object sender, RoutedEventArgs e)

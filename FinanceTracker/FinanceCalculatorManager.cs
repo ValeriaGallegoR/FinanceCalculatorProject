@@ -1,10 +1,12 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using System;
+using System.Collections.Generic;
+using System.Data.SQLite;
+using FinanceCalculatorProject;
 
 namespace FinanceCalculator
 {
     public class FinanceCalculatorManager
     {
-
         // List to store transactions
         private List<Transaction> transactions;
 
@@ -14,58 +16,65 @@ namespace FinanceCalculator
             transactions = new List<Transaction>();
         }
 
-
-        // Method to add a transaction Income
+        // Method to add a transaction - Income
         public void AddTransactionIncome(IncomeTransaction transaction)
         {
-            using (SqlConnection connection = Connection.createInstance().createConnection())
+            using (SQLiteConnection connection = Connection.GetConnection())
             {
-                string query = "INSERT INTO tb_transactions (date,amount,type,detail) values('" + transaction.Date + "'," + transaction.Amount + ",'" + transaction.Type + "','" + transaction.Source + "')";
-                SqlCommand command = new SqlCommand(query, connection);
+                string query = "INSERT INTO Transactions (Date, Amount, Type, Category) VALUES (@date, @amount, @type, @category)";
+                SQLiteCommand command = new SQLiteCommand(query, connection);
+                command.Parameters.AddWithValue("@date", transaction.Date.ToString("yyyy-MM-dd"));
+                command.Parameters.AddWithValue("@amount", transaction.Amount);
+                command.Parameters.AddWithValue("@type", transaction.Type.ToString());
+                command.Parameters.AddWithValue("@category", transaction.Source);
+
                 connection.Open();
                 command.ExecuteNonQuery();
                 connection.Close();
             }
 
             transactions.Add(transaction);
-            Console.WriteLine("Transaction added successfully.");
+            Console.WriteLine("Income transaction added successfully.");
         }
 
-        // Method to add a transaction Expense
+        // Method to add a transaction - Expense
         public void AddTransactionExpense(ExpenseTransaction transaction)
         {
-            using (SqlConnection connection = Connection.createInstance().createConnection())
+            using (SQLiteConnection connection = Connection.GetConnection())
             {
-                string query = "INSERT INTO tb_transactions (date,amount,type,detail) values('" + transaction.Date + "'," + transaction.Amount + ",'" + transaction.Type + "','" + transaction.Category + "')";
-                SqlCommand command = new SqlCommand(query, connection);
+                string query = "INSERT INTO Transactions (Date, Amount, Type, Category) VALUES (@date, @amount, @type, @category)";
+                SQLiteCommand command = new SQLiteCommand(query, connection);
+                command.Parameters.AddWithValue("@date", transaction.Date.ToString("yyyy-MM-dd"));
+                command.Parameters.AddWithValue("@amount", transaction.Amount);
+                command.Parameters.AddWithValue("@type", transaction.Type.ToString());
+                command.Parameters.AddWithValue("@category", transaction.Category);
+
                 connection.Open();
                 command.ExecuteNonQuery();
                 connection.Close();
             }
 
             transactions.Add(transaction);
-            Console.WriteLine("Transaction added successfully.");
+            Console.WriteLine("Expense transaction added successfully.");
         }
-        
-
 
         // Method to display all transactions
         public List<string> DisplayAllTransactions()
         {
             List<string> transactionsList = new List<string>();
 
-            using (SqlConnection connection = Connection.createInstance().createConnection())
+            using (SQLiteConnection connection = Connection.GetConnection())
             {
-                string query = "SELECT CONVERT(VARCHAR(10), date, 23), amount, type, detail FROM tb_transactions";
-                SqlCommand command = new SqlCommand(query, connection);
+                string query = "SELECT Date, Amount, Type, Category FROM Transactions ORDER BY Date DESC";
+                SQLiteCommand command = new SQLiteCommand(query, connection);
                 try
                 {
                     connection.Open();
-                    SqlDataReader reader = command.ExecuteReader();
+                    SQLiteDataReader reader = command.ExecuteReader();
 
                     while (reader.Read())
                     {
-                        string transaction = $"{reader[0]}\t{reader[1]}\t{reader[2]}\t{reader[3]}";
+                        string transaction = $"{reader["Date"]}\t{reader["Amount"]}\t{reader["Type"]}\t{reader["Category"]}";
                         transactionsList.Add(transaction);
                     }
                     reader.Close();
@@ -74,30 +83,31 @@ namespace FinanceCalculator
                 {
                     Console.WriteLine("An error occurred! " + ex.Message);
                 }
+                connection.Close();
             }
 
             return transactionsList;
         }
 
-
-        // Method to display transactions by type
+        // Method to display transactions filtered by type
         public List<string> DisplayTransactionsByType(TransactionType type)
         {
             List<string> transactionsList = new List<string>();
 
-            using (SqlConnection connection = Connection.createInstance().createConnection())
+            using (SQLiteConnection connection = Connection.GetConnection())
             {
-                string query = "SELECT CONVERT(VARCHAR(10), date, 23), amount, type, detail FROM tb_transactions WHERE type = @type";
-                SqlCommand command = new SqlCommand(query, connection);
+                string query = "SELECT Date, Amount, Type, Category FROM Transactions WHERE Type = @type ORDER BY Date DESC";
+                SQLiteCommand command = new SQLiteCommand(query, connection);
                 command.Parameters.AddWithValue("@type", type.ToString());
+
                 try
                 {
                     connection.Open();
-                    SqlDataReader reader = command.ExecuteReader();
+                    SQLiteDataReader reader = command.ExecuteReader();
 
                     while (reader.Read())
                     {
-                        string transaction = $"{reader[0]}\t{reader[1]}\t{reader[2]}\t{reader[3]}";
+                        string transaction = $"{reader["Date"]}\t{reader["Amount"]}\t{reader["Type"]}\t{reader["Category"]}";
                         transactionsList.Add(transaction);
                     }
                     reader.Close();
@@ -106,6 +116,7 @@ namespace FinanceCalculator
                 {
                     Console.WriteLine("An error occurred! " + ex.Message);
                 }
+                connection.Close();
             }
 
             return transactionsList;

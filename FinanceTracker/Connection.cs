@@ -1,55 +1,59 @@
 ﻿using System;
-using Microsoft.Data.SqlClient;
+using System.Data.SQLite;
+using System.IO;
 
-
-public class Connection
+namespace FinanceCalculatorProject
 {
-
-    private string Base;
-    private string Server;
-    private string User;
-    private string Password;
-    private static Connection Con = null;
-
-    private Connection()
+    public class Connection
     {
-        this.Server = "val\\MSSQL2022";
-        this.Base = "bd_wallet";
-        this.User = "project_master";
-        this.Password = "1234";
-    }
-
-    public SqlConnection createConnection()
-    {
-
-        SqlConnection Chain = new SqlConnection();
-
-        try
+        // Get full path to the SQLite database file
+        private static string GetDatabasePath()
         {
-            Chain.ConnectionString = "Server=" + this.Server +
-                                     "; Database=" + this.Base +
-                                     "; User Id=" + this.User +
-                                     "; Password=" + this.Password +
-                                     "; TrustServerCertificate=True";
-        }
-        catch (Exception ex)
-        {
-            Chain = null;
-            throw ex;
+            string databaseFileName = "FinanceDB.sqlite";
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+            string fullPath = Path.Combine(basePath, databaseFileName);
+            return fullPath;
         }
 
-        return Chain;
-    }
-
-    public static Connection createInstance()
-    {
-
-        if (Con == null)
+        // Return a fresh SQLite connection (caller opens/closes it)
+        public static SQLiteConnection GetConnection()
         {
-            Con = new Connection();
+            string dbPath = GetDatabasePath();
+
+            // If database doesn't exist, create it and tables
+            if (!File.Exists(dbPath))
+            {
+                SQLiteConnection.CreateFile(dbPath);
+                CreateTables(dbPath);
+            }
+
+            return new SQLiteConnection($"Data Source={dbPath};Version=3;");
         }
 
-        return Con;
-    }
+        // Create table if not exists
+        private static void CreateTables(string dbPath)
+        {
+            using (var conn = new SQLiteConnection($"Data Source={dbPath};Version=3;"))
+            {
+                conn.Open();
 
+                string createTableQuery = @"
+                    CREATE TABLE IF NOT EXISTS Transactions (
+                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        Type TEXT NOT NULL,
+                        Category TEXT NOT NULL,
+                        Amount REAL NOT NULL,
+                        Description TEXT,
+                        Date TEXT NOT NULL
+                    );";
+
+                using (var cmd = new SQLiteCommand(createTableQuery, conn))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+
+                conn.Close();
+            }
+        }
+    }
 }
