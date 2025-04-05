@@ -6,21 +6,25 @@ namespace FinanceCalculatorProject
 {
     public class Connection
     {
-        // Get full path to the SQLite database file
+        // Hardcoded full path to the SQLite database file
         private static string GetDatabasePath()
         {
-            string databaseFileName = "FinanceDB.sqlite";
-            string basePath = AppDomain.CurrentDomain.BaseDirectory;
-            string fullPath = Path.Combine(basePath, databaseFileName);
-            return fullPath;
+            return @"C:\Users\arun7\source\repos\FinanceCalculatorProject\tree\SQLite_Version\bin\Debug\net8.0\FinanceDB.sqlite";
         }
 
         // Return a fresh SQLite connection (caller opens/closes it)
         public static SQLiteConnection GetConnection()
         {
             string dbPath = GetDatabasePath();
+            string directoryPath = Path.GetDirectoryName(dbPath);
 
-            // If database doesn't exist, create it and tables
+            // Create directory if it doesn't exist
+            if (!Directory.Exists(directoryPath))
+            {
+                Directory.CreateDirectory(directoryPath);
+            }
+
+            // Create database file if it doesn't exist
             if (!File.Exists(dbPath))
             {
                 SQLiteConnection.CreateFile(dbPath);
