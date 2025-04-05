@@ -6,25 +6,30 @@ namespace FinanceCalculatorProject
 {
     public class Connection
     {
-        // Hardcoded full path to the SQLite database file
+        // Hardcoded full folder and database filename
         private static string GetDatabasePath()
         {
-            return @"C:\Users\arun7\source\repos\FinanceCalculatorProject\tree\SQLite_Version\bin\Debug\net8.0\FinanceDB.sqlite";
+            string folderPath = @"C:\Users\arun7\source\repos\FinanceCalculatorProject\tree\SQLite_Version\bin\Debug\net8.0";
+            string fileName = "FinanceDB.sqlite";
+
+            // Combine folder and filename safely
+            string fullPath = Path.Combine(folderPath, fileName);
+
+            // Ensure the folder exists
+            if (!Directory.Exists(folderPath))
+            {
+                Directory.CreateDirectory(folderPath);
+            }
+
+            return fullPath;
         }
 
         // Return a fresh SQLite connection (caller opens/closes it)
         public static SQLiteConnection GetConnection()
         {
             string dbPath = GetDatabasePath();
-            string directoryPath = Path.GetDirectoryName(dbPath);
 
-            // Create directory if it doesn't exist
-            if (!Directory.Exists(directoryPath))
-            {
-                Directory.CreateDirectory(directoryPath);
-            }
-
-            // Create database file if it doesn't exist
+            // If database file doesn't exist, create it and the tables
             if (!File.Exists(dbPath))
             {
                 SQLiteConnection.CreateFile(dbPath);
@@ -34,7 +39,7 @@ namespace FinanceCalculatorProject
             return new SQLiteConnection($"Data Source={dbPath};Version=3;");
         }
 
-        // Create table if not exists
+        // Create Transactions table if not exists
         private static void CreateTables(string dbPath)
         {
             using (var conn = new SQLiteConnection($"Data Source={dbPath};Version=3;"))
