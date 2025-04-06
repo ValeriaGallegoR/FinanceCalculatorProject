@@ -10,10 +10,11 @@
 
   <ItemGroup>
     <PackageReference Include="LiveCharts.Wpf" Version="0.9.7" />
+    <PackageReference Include="System.Data.SQLite" Version="1.0.119" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\FinanceTracker\FinanceCalculator.csproj" />
+    <ProjectReference Include="..\FinanceTracker\FinanceManager.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,4 @@
-﻿namespace FinanceCalculator
+﻿namespace FinanceManager
 {
     // Enum for transaction types
     public enum TransactionType
