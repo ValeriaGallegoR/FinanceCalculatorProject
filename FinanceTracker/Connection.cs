@@ -2,11 +2,11 @@
 using System.Data.SQLite;
 using System.IO;
 
-namespace FinanceCalculatorProject
+namespace FinanceManagerProject
 {
     public class Connection
     {
-        // Hardcoded full folder and database filename
+        
         private static string GetDatabasePath()
         {
             string folderPath = @"C:\Users\arun7\source\repos\FinanceCalculatorProject\tree\SQLite_Version\bin\Debug\net8.0";

@@ -1,19 +1,19 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Controls;
-using FinanceCalculator;
+using FinanceManager;
 using LiveCharts;
 using LiveCharts.Wpf;
 using System.Windows.Media;
-using FinanceCalculatorProject;
+using FinanceManagerProject;
 using System.Data.SQLite;
 
-namespace FinanceCalculatorWPF
+namespace FinanceManagerWPF
 {
     public partial class MainWindow : Window
     {
-        private FinanceCalculatorManager cm;
-        private FinanceCalculatorOperations co;
+        private FinanceManagerCalculator cm;
+        private FinanceManagerOperations co;
         public Func<double, string> Formatter { get; set; }
 
         public MainWindow()
@@ -23,8 +23,8 @@ namespace FinanceCalculatorWPF
             var conn = Connection.GetConnection();
             conn.Open(); conn.Close();
 
-            cm = new FinanceCalculatorManager();
-            co = new FinanceCalculatorOperations();
+            cm = new FinanceManagerCalculator();
+            co = new FinanceManagerOperations();
 
             Formatter = value => value.ToString("C");
             DataContext = this;

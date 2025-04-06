@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
-using FinanceCalculatorProject;
+using FinanceManagerProject;
 
-namespace FinanceCalculator
+namespace FinanceManager
 {
-    public class FinanceCalculatorManager
+    public class FinanceManagerCalculator
     {
         private List<Transaction> transactions;
 
-        public FinanceCalculatorManager()
+        public FinanceManagerCalculator()
         {
             transactions = new List<Transaction>();
         }

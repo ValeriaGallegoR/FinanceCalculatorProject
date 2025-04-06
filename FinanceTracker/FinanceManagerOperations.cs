@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Data.SQLite;
-using FinanceCalculatorProject;
+using FinanceManagerProject;
 
-namespace FinanceCalculator
+namespace FinanceManager
 {
-    public class FinanceCalculatorOperations
+    public class FinanceManagerOperations
     {
         // Method to calculate total income
         public decimal CalculateTotalIncome()

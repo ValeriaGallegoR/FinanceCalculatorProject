@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Globalization;
 
-namespace FinanceCalculator
+namespace FinanceManager
 {
-    public static class FinanceCalculatorUtilities
+    public static class FinanceManagerUtilities
     {
         // Format a decimal as currency (used in ToString overrides or summaries)
         public static string FormatCurrency(decimal amount)
