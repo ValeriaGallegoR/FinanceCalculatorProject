@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.13.35806.99
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FinanceManagerWPF", "FinanceTrackerWPF\FinanceManagerWPF.csproj", "{33DBB9F2-044B-4CF7-A0F1-9621965C7497}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FinanceManagerWPF", "FinanceManagerWPF\FinanceManagerWPF.csproj", "{33DBB9F2-044B-4CF7-A0F1-9621965C7497}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FinanceManager", "FinanceTracker\FinanceManager.csproj", "{9F8736F7-A8A1-4818-BB8A-D78F76272EFF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FinanceManager", "FinanceManager\FinanceManager.csproj", "{9F8736F7-A8A1-4818-BB8A-D78F76272EFF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
