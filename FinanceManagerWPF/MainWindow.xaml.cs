@@ -7,6 +7,9 @@ using LiveCharts.Wpf;
 using System.Windows.Media;
 using FinanceManagerProject;
 using System.Data.SQLite;
+using System.Data;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace FinanceManagerWPF
 {
@@ -85,34 +88,19 @@ namespace FinanceManagerWPF
 
         private void ShowAll_Click(object sender, RoutedEventArgs e)
         {
-            TransactionList.Items.Clear();
             var allTransactions = cm.DisplayAllTransactions();
-            foreach (var transaction in allTransactions)
-            {
-                if (!string.IsNullOrWhiteSpace(transaction))
-                {
-                    TransactionList.Items.Add(transaction);
-                }
-            }
+            TransactionsDataGrid.ItemsSource = ParseTransactionList(allTransactions);
         }
 
         private void ShowByType_Click(object sender, RoutedEventArgs e)
         {
-            TransactionList.Items.Clear();
-
             if (TypeComboBox.SelectedItem is ComboBoxItem selectedType)
             {
                 string typeText = selectedType.Content.ToString();
                 TransactionType type = (typeText == "Income") ? TransactionType.Income : TransactionType.Expense;
 
                 var filteredTransactions = cm.DisplayTransactionsByType(type);
-                foreach (var transaction in filteredTransactions)
-                {
-                    if (!string.IsNullOrWhiteSpace(transaction))
-                    {
-                        TransactionList.Items.Add(transaction);
-                    }
-                }
+                TransactionsDataGrid.ItemsSource = ParseTransactionList(filteredTransactions);
 
                 UpdateGraph();
             }
@@ -124,101 +112,107 @@ namespace FinanceManagerWPF
 
         private void UpdateTransaction_Click(object sender, RoutedEventArgs e)
         {
-            if (TransactionList.SelectedItem == null)
+            if (TransactionsDataGrid.SelectedItem is TransactionModel selectedTransaction)
             {
-                MessageBox.Show("❌ Please select a transaction from the list to update.");
-                return;
-            }
-
-            if (!decimal.TryParse(AmountTextBox.Text.Trim(), out decimal amount) || amount <= 0)
-            {
-                MessageBox.Show("❌ Please enter a valid positive amount.");
-                return;
-            }
-
-            if (!(TypeComboBox.SelectedItem is ComboBoxItem selectedType))
-            {
-                MessageBox.Show("❌ Please select a transaction type.");
-                return;
-            }
-
-            string selectedText = TransactionList.SelectedItem.ToString();
-            string idPart = selectedText.Split('|')[0];
-            if (!int.TryParse(idPart, out int transactionId))
-            {
-                MessageBox.Show("❌ Could not extract transaction ID.");
-                return;
-            }
-
-            string typeText = selectedType.Content.ToString();
-            string category = (typeText == "Income") ? IncomeCategoryComboBox.Text : ExpenseCategoryComboBox.Text;
-
-            if (string.IsNullOrWhiteSpace(category))
-            {
-                MessageBox.Show("❌ Category or source is required.");
-                return;
-            }
-
-            using (var conn = Connection.GetConnection())
-            {
-                conn.Open();
-                string query = "UPDATE Transactions SET Amount = @amount, Type = @type, Category = @category, Date = @date WHERE Id = @id";
-
-                using (var cmd = new SQLiteCommand(query, conn))
+                if (!decimal.TryParse(AmountTextBox.Text.Trim(), out decimal amount) || amount <= 0)
                 {
-                    cmd.Parameters.AddWithValue("@amount", amount);
-                    cmd.Parameters.AddWithValue("@type", typeText);
-                    cmd.Parameters.AddWithValue("@category", category);
-                    cmd.Parameters.AddWithValue("@date", DateTime.Now.ToString("yyyy-MM-dd"));
-                    cmd.Parameters.AddWithValue("@id", transactionId);
-                    cmd.ExecuteNonQuery();
+                    MessageBox.Show("❌ Please enter a valid positive amount.");
+                    return;
                 }
-                conn.Close();
-            }
 
-            MessageBox.Show("✅ Transaction updated successfully.");
-            ClearInputs();
-            ShowAll_Click(null, null);
-            UpdateGraph();
-        }
+                if (!(TypeComboBox.SelectedItem is ComboBoxItem selectedType))
+                {
+                    MessageBox.Show("❌ Please select a transaction type.");
+                    return;
+                }
 
-        private void DeleteTransaction_Click(object sender, RoutedEventArgs e)
-        {
-            if (TransactionList.SelectedItem == null)
-            {
-                MessageBox.Show("❌ Please select a transaction to delete.");
-                return;
-            }
+                string typeText = selectedType.Content.ToString();
+                string category = (typeText == "Income") ? IncomeCategoryComboBox.Text : ExpenseCategoryComboBox.Text;
 
-            string selectedText = TransactionList.SelectedItem.ToString();
-            string idPart = selectedText.Split('|')[0];
+                if (string.IsNullOrWhiteSpace(category))
+                {
+                    MessageBox.Show("❌ Category or source is required.");
+                    return;
+                }
 
-            if (!int.TryParse(idPart, out int transactionId))
-            {
-                MessageBox.Show("❌ Could not extract transaction ID.");
-                return;
-            }
-
-            var result = MessageBox.Show("Are you sure you want to delete this transaction?", "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Question);
-            if (result == MessageBoxResult.Yes)
-            {
                 using (var conn = Connection.GetConnection())
                 {
                     conn.Open();
-                    string query = "DELETE FROM Transactions WHERE Id = @id";
+                    string query = "UPDATE Transactions SET Amount = @amount, Type = @type, Category = @category, Date = @date WHERE Id = @id";
 
                     using (var cmd = new SQLiteCommand(query, conn))
                     {
-                        cmd.Parameters.AddWithValue("@id", transactionId);
+                        cmd.Parameters.AddWithValue("@amount", amount);
+                        cmd.Parameters.AddWithValue("@type", typeText);
+                        cmd.Parameters.AddWithValue("@category", category);
+                        cmd.Parameters.AddWithValue("@date", DateTime.Now.ToString("yyyy-MM-dd"));
+                        cmd.Parameters.AddWithValue("@id", selectedTransaction.Id);
                         cmd.ExecuteNonQuery();
                     }
                     conn.Close();
                 }
 
-                MessageBox.Show("✅ Transaction deleted successfully.");
+                MessageBox.Show("✅ Transaction updated successfully.");
                 ClearInputs();
                 ShowAll_Click(null, null);
                 UpdateGraph();
+            }
+        }
+
+        private void DeleteTransaction_Click(object sender, RoutedEventArgs e)
+        {
+            if (TransactionsDataGrid.SelectedItem is TransactionModel selectedTransaction)
+            {
+                var result = MessageBox.Show("Are you sure you want to delete this transaction?", "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (result == MessageBoxResult.Yes)
+                {
+                    using (var conn = Connection.GetConnection())
+                    {
+                        conn.Open();
+                        string query = "DELETE FROM Transactions WHERE Id = @id";
+
+                        using (var cmd = new SQLiteCommand(query, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@id", selectedTransaction.Id);
+                            cmd.ExecuteNonQuery();
+                        }
+                        conn.Close();
+                    }
+
+                    MessageBox.Show("✅ Transaction deleted successfully.");
+                    ClearInputs();
+                    ShowAll_Click(null, null);
+                    UpdateGraph();
+                }
+            }
+        }
+
+        private void TransactionsDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (TransactionsDataGrid.SelectedItem is TransactionModel row)
+            {
+                AmountTextBox.Text = row.Amount.ToString();
+
+                TypeComboBox.SelectedItem = TypeComboBox.Items
+                    .Cast<ComboBoxItem>()
+                    .FirstOrDefault(i => i.Content.ToString() == row.Type);
+
+                if (row.Type == "Income")
+                {
+                    IncomeCategoryComboBox.Visibility = Visibility.Visible;
+                    ExpenseCategoryComboBox.Visibility = Visibility.Collapsed;
+                    IncomeCategoryComboBox.SelectedItem = IncomeCategoryComboBox.Items
+                        .Cast<ComboBoxItem>()
+                        .FirstOrDefault(i => i.Content.ToString() == row.Category);
+                }
+                else if (row.Type == "Expense")
+                {
+                    IncomeCategoryComboBox.Visibility = Visibility.Collapsed;
+                    ExpenseCategoryComboBox.Visibility = Visibility.Visible;
+                    ExpenseCategoryComboBox.SelectedItem = ExpenseCategoryComboBox.Items
+                        .Cast<ComboBoxItem>()
+                        .FirstOrDefault(i => i.Content.ToString() == row.Category);
+                }
             }
         }
 
@@ -278,9 +272,6 @@ namespace FinanceManagerWPF
         private void ClearInputs()
         {
             AmountTextBox.Clear();
-            // Keep planned inputs visible
-            // PlannedIncomeTextBox.Clear();
-            // ExpectedExpensesTextBox.Clear();
             IncomeCategoryComboBox.SelectedIndex = -1;
             ExpenseCategoryComboBox.SelectedIndex = -1;
             TypeComboBox.SelectedIndex = -1;
@@ -305,15 +296,46 @@ namespace FinanceManagerWPF
             }
         }
 
-        // 🔄 Trigger graph update when planned values change
-        private void PlannedIncomeTextBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            UpdateGraph();
-        }
+        private void PlannedIncomeTextBox_TextChanged(object sender, TextChangedEventArgs e) => UpdateGraph();
 
-        private void ExpectedExpensesTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        private void ExpectedExpensesTextBox_TextChanged(object sender, TextChangedEventArgs e) => UpdateGraph();
+
+        // Helper to parse string list into model list
+        private List<TransactionModel> ParseTransactionList(List<string> rawList)
         {
-            UpdateGraph();
+            var list = new List<TransactionModel>();
+            foreach (var line in rawList)
+            {
+                var parts = line.Split('|');
+                if (parts.Length == 2)
+                {
+                    var values = parts[1].Trim().Split('\t');
+                    if (values.Length == 4 &&
+                        int.TryParse(parts[0], out int id) &&
+                        DateTime.TryParse(values[0], out DateTime date) &&
+                        double.TryParse(values[1], out double amount))
+                    {
+                        list.Add(new TransactionModel
+                        {
+                            Id = id,
+                            Date = date,
+                            Amount = amount,
+                            Type = values[2],
+                            Category = values[3]
+                        });
+                    }
+                }
+            }
+            return list;
         }
+    }
+
+    public class TransactionModel
+    {
+        public int Id { get; set; }
+        public DateTime Date { get; set; }
+        public double Amount { get; set; }
+        public string Type { get; set; }
+        public string Category { get; set; }
     }
 }

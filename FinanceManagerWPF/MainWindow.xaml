@@ -6,15 +6,25 @@
     <Grid Margin="20">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
-            <!-- Left: List + Chart -->
             <ColumnDefinition Width="2*" />
-            <!-- Right: Form and Buttons -->
         </Grid.ColumnDefinitions>
 
-        <!-- Left Side: List and Chart -->
+        <!-- Left Side: DataGrid and Chart -->
         <StackPanel Grid.Column="0" Margin="0,0,20,0">
             <TextBlock Text="Transactions" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
-            <ListBox x:Name="TransactionList" Height="150" Margin="0,0,0,20"/>
+            <DataGrid x:Name="TransactionsDataGrid"
+                      Height="150"
+                      AutoGenerateColumns="False"
+                      SelectionChanged="TransactionsDataGrid_SelectionChanged"
+                      Margin="0,0,0,20">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="Auto"/>
+                    <DataGridTextColumn Header="Date" Binding="{Binding Date}" Width="*"/>
+                    <DataGridTextColumn Header="Amount" Binding="{Binding Amount}" Width="*"/>
+                    <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="*"/>
+                    <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="*"/>
+                </DataGrid.Columns>
+            </DataGrid>
 
             <TextBlock Text="Finance Chart" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
             <lvc:CartesianChart x:Name="FinanceChart" Height="300">
@@ -27,7 +37,7 @@
             </lvc:CartesianChart>
         </StackPanel>
 
-        <!-- Right Side: Input Form and Buttons -->
+        <!-- Right Side: Form -->
         <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
             <StackPanel>
                 <TextBlock Text="Finance Manager" FontSize="24" FontWeight="Bold" Margin="0,0,0,20"/>
